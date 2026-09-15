@@ -28,10 +28,9 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install buildozer cython==0.29.33
 
-      - name: Auto Create main.py & buildozer.spec (If Missing)
+      - name: Create main.py if missing
         run: |
           if [ ! -f main.py ]; then
-            echo "Creating main.py..."
             cat << 'EOF' > main.py
           from kivy.app import App
           from kivy.uix.boxlayout import BoxLayout
@@ -90,14 +89,28 @@ jobs:
           EOF
           fi
 
-          if [ ! -f buildozer.spec ]; then
-            echo "Creating buildozer.spec..."
-            buildozer init
-          fi
-
-      - name: Build APK with Buildozer
+      - name: Create/Update buildozer.spec
         run: |
-          yes | buildozer -v android debug
+          cat << 'EOF' > buildozer.spec
+          [app]
+          title = Calculator
+          package.name = calculator
+          package.domain = org.myapp
+          source.dir = .
+          source.include_exts = py,png,jpg,kv,atlas
+          version = 0.1
+          requirements = python3,kivy
+          orientation = portrait
+          fullscreen = 0
+          android.archs = arm64-v8a
+          android.accept_sdk_license = True
+          android.api = 33
+          android.minapi = 21
+          EOF
+
+      - name: Build APK
+        run: |
+          buildozer android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
